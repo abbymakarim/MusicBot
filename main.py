@@ -5,6 +5,9 @@ import os
 from help_cog import help_cog
 from music_cog import music_cog
 
+if not discord.opus.is_loaded():
+    discord.opus.load_opus('libopus.so.0')	
+
 intents = discord.Intents.all()
 
 bot = commands.Bot(command_prefix="/", intents=intents)

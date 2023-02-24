@@ -11,7 +11,7 @@ class music_cog(commands.Cog):
         self.is_paused = False
 
         self.music_queue = []
-        self.YDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
+        self.YDL_OPTIONS = {'format': 'bestaudio/best', 'acodec' 'noplaylist': 'True', 'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}]}
         self.FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
 
         self.vc = None
@@ -20,9 +20,13 @@ class music_cog(commands.Cog):
         with YoutubeDL(self.YDL_OPTIONS) as ydl:
             try:
                 info = ydl.extract_info("ytsearch:%s" % item, download=False)['entries'][0]
+                for i in info['formats']:
+                    if (i['ext']) == 'm4a':
+                        url = i['url']
+                        break
             except Exception:
                 return False
-            return {'source': info['formats'][0]['url'], 'title': info['title']}
+            return {'source': url, 'title': info['title']}
 
     def play_next(self):
         if len(self.music_queue) > 0:
@@ -38,10 +42,8 @@ class music_cog(commands.Cog):
 
     async def play_music(self, ctx):
         if len(self.music_queue) > 0:
-            print("masuk sini")
             self.is_playing = True
             m_url = self.music_queue[0][0]['source']
-            print(m_url, "m_url")
 
             if self.vc == None or not self.vc.is_connected():
                 self.vc = await self.music_queue[0][1].connect()
@@ -70,7 +72,6 @@ class music_cog(commands.Cog):
             self.vc.resume()
         else:
             song = self.search_yt(query)
-            print(song)
             if type(song) == type(True):
                 await ctx.send("Could not download the song. Incorrect format, try a different keyword")
             else:
@@ -78,7 +79,6 @@ class music_cog(commands.Cog):
                 self.music_queue.append([song, voice_channel])
 
                 if self.is_playing == False:
-                    print("masuk self is playing")
                     await self.play_music(ctx)
 
     @commands.command(name="pause", help="Pauses the current song being played")
