@@ -1,11 +1,13 @@
 import discord
+import asyncio
 from discord.ext import commands
-
+from asyncio import sleep
 from yt_dlp import YoutubeDL
 
 class music_cog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.music_title = ''
 
         self.is_playing = False
         self.is_paused = False
@@ -34,6 +36,8 @@ class music_cog(commands.Cog):
 
             m_url = self.music_queue[0][0]['source']
 
+            self.music_title = self.music_queue[0][0]['title']
+
             self.music_queue.pop(0)
 
             self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
@@ -54,9 +58,20 @@ class music_cog(commands.Cog):
             else:
                 await self.vc.move_to(self.music_queue[0][1])
 
+            self.music_title = self.music_queue[0][0]['title']
+
             self.music_queue.pop(0)
 
             self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
+
+            while self.vc.is_playing():
+                if self.music_title != '':
+                    await ctx.send('Currently Playing: '+ self.music_title)
+                    self.music_title = ''
+                    # Ini masih auto dc kalau lagu abis ga nunggu (perlu adjustment)
+                await sleep(1)
+            
+            await self.vc.disconnect()
 
         else:
             self.is_playing = False
@@ -75,7 +90,7 @@ class music_cog(commands.Cog):
             if type(song) == type(True):
                 await ctx.send("Could not download the song. Incorrect format, try a different keyword")
             else:
-                await ctx.send("Song added to the queue - "+ song['title'])
+                await ctx.send("Song added to the queue : "+ song['title'])
                 self.music_queue.append([song, voice_channel])
 
                 if self.is_playing == False:
