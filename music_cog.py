@@ -36,7 +36,7 @@ class music_cog(commands.Cog):
 
             self.music_queue.pop(0)
 
-            self.vc.play(discord.FFmpegAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
+            self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
         else:
             self.is_playing = False
 
@@ -75,7 +75,7 @@ class music_cog(commands.Cog):
             if type(song) == type(True):
                 await ctx.send("Could not download the song. Incorrect format, try a different keyword")
             else:
-                await ctx.send("Song added to the queue")
+                await ctx.send("Song added to the queue - "+ song['title'])
                 self.music_queue.append([song, voice_channel])
 
                 if self.is_playing == False:
