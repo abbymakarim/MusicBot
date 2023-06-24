@@ -4,6 +4,8 @@ from discord.ext import commands
 from asyncio import sleep
 from yt_dlp import YoutubeDL
 
+from dotenv import load_dotenv
+
 load_dotenv() 
 from dotenv import dotenv_values
 config = dotenv_values(".env")
