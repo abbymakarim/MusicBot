@@ -62,17 +62,18 @@ class music_cog(commands.Cog):
 
             self.music_queue.pop(0)
 
-            self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
-
-            while self.vc.is_playing():
-                if self.music_title != '':
-                    await ctx.send('Currently Playing: '+ self.music_title)
-                    self.music_title = ''
-                    # Ini masih auto dc kalau lagu abis ga nunggu (perlu adjustment)
-                await sleep(1)
-            
-            await self.vc.disconnect()
-
+            try:
+                self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
+                while self.vc.is_playing():
+                    if self.music_title != '':
+                        await ctx.send('Currently Playing: '+ self.music_title)
+                        self.music_title = ''
+                        # Ini masih auto dc kalau lagu abis ga nunggu (perlu adjustment)
+                    await sleep(1)            
+                await self.vc.disconnect()
+            except Exception:
+                await ctx.send("```Could not play the song. Ask opik for advice```")
+                await self.vc.disconnect()
         else:
             self.is_playing = False
 
