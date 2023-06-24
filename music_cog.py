@@ -4,6 +4,10 @@ from discord.ext import commands
 from asyncio import sleep
 from yt_dlp import YoutubeDL
 
+load_dotenv() 
+from dotenv import dotenv_values
+config = dotenv_values(".env")
+
 class music_cog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -69,10 +73,13 @@ class music_cog(commands.Cog):
                         await ctx.send('Currently Playing: '+ self.music_title)
                         self.music_title = ''
                         # Ini masih auto dc kalau lagu abis ga nunggu (perlu adjustment)
-                    await sleep(1)            
+                await ctx.send("```No more song in queue```")
+                await ctx.send("```Stand by...```")
+                await sleep(10)    
                 await self.vc.disconnect()
             except Exception:
-                await ctx.send("```Could not play the song. Ask opik for advice```")
+                log_channel = self.bot.get_channel(config['LOG_CHANNEL_ID'])
+                await log_channel.send("```Could not play the song. Ask opik for advice```")
                 await self.vc.disconnect()
         else:
             self.is_playing = False
@@ -81,12 +88,13 @@ class music_cog(commands.Cog):
     async def play(self, ctx, *args):
         query = " ".join(args)
 
-        voice_channel = ctx.author.voice.channel
+        voice_channel = ctx.author.voice.channel    
         if voice_channel is None:
             await ctx.send("Connect to a voice channel!")
         elif self.is_paused:
             self.vc.resume()
         else:
+            await ctx.send("```Searching....```")
             song = self.search_yt(query)
             if type(song) == type(True):
                 await ctx.send("Could not download the song. Incorrect format, try a different keyword")
