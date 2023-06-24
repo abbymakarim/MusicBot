@@ -16,6 +16,7 @@ class music_cog(commands.Cog):
         self.music_title = ''
 
         self.is_playing = False
+        self.is_disconnected = False
         self.is_paused = False
 
         self.music_queue = []
@@ -72,13 +73,17 @@ class music_cog(commands.Cog):
                 self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
                 while self.vc.is_playing():
                     if self.music_title != '':
-                        await ctx.send('Currently Playing: '+ self.music_title)
+                        await ctx.send('```Currently Playing: '+ self.music_title + '```')
                         self.music_title = ''
+                        self.is_disconnected = False
                         # Ini masih auto dc kalau lagu abis ga nunggu (perlu adjustment)
                 await ctx.send("```No more song in queue```")
+                if self.vc.is_playing() == False:
+                    self.is_disconnected = True
                 await ctx.send("```Stand by...```")
-                await sleep(10)    
-                await self.vc.disconnect()
+                await sleep(10) 
+                if self.is_disconnected == True:
+                    await self.vc.disconnect()
             except Exception:
                 log_channel = self.bot.get_channel(config['LOG_CHANNEL_ID'])
                 await log_channel.send("```Could not play the song. Ask opik for advice```")
@@ -101,7 +106,7 @@ class music_cog(commands.Cog):
             if type(song) == type(True):
                 await ctx.send("Could not download the song. Incorrect format, try a different keyword")
             else:
-                await ctx.send("Song added to the queue : "+ song['title'])
+                await ctx.send("```Song added to the queue : "+ song['title'] + "```")
                 self.music_queue.append([song, voice_channel])
 
                 if self.is_playing == False:
