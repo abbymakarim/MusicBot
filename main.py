@@ -1,7 +1,12 @@
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
 import os
   
+load_dotenv() 
+from dotenv import dotenv_values
+config = dotenv_values(".env")
+
 from help_cog import help_cog
 from music_cog import music_cog
 
@@ -27,6 +32,4 @@ async def hello(ctx):
 async def test(ctx):
     await ctx.send("Test")
 
-
-
-bot.run("MTA3ODE2NTQzMTUwMTcyNTc5Ng.GaF40E.XUnGRq_dB-RoWPA6iGc-Me4LV-J3ZPcCrpcuVM")
+bot.run(config['DISCORD_SECRET_KEY'])
