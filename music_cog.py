@@ -76,6 +76,7 @@ class music_cog(commands.Cog):
                         await ctx.send('```Currently Playing: '+ self.music_title + '```')
                         self.music_title = ''
                         self.is_disconnected = False
+                    await sleep(1) 
                         # Ini masih auto dc kalau lagu abis ga nunggu (perlu adjustment)
                 await ctx.send("```No more song in queue```")
                 if self.vc.is_playing() == False:
