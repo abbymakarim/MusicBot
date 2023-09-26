@@ -14,6 +14,7 @@ class music_cog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.music_title = ''
+        self.song = [{}]
 
         self.is_playing = False
         self.is_disconnected = False
@@ -25,16 +26,18 @@ class music_cog(commands.Cog):
 
         self.vc = None
 
-    def search_yt(self, item):
+    async def search_yt(self, songName, voiceChannel):
         with YoutubeDL(self.YDL_OPTIONS) as ydl:
             try:
-                info = ydl.extract_info("ytsearch:%s" % item, download=False)['entries'][0]
+                info = ydl.extract_info("ytsearch:%s" % songName, download=False)['entries'][0]
                 for i in info['formats']:
                     if (i['ext']) == 'm4a':
                         url = i['url']
                         break
             except Exception:
                 return False
+            sourceSong = {'source': url, 'title': info['title'], 'voiceChannel': voiceChannel}
+            self.song.append(sourceSong)
             return {'source': url, 'title': info['title']}
 
     def play_next(self):
@@ -52,22 +55,23 @@ class music_cog(commands.Cog):
             self.is_playing = False
 
     async def play_music(self, ctx):
-        if len(self.music_queue) > 0:
+        if len(self.song) > 0:
             self.is_playing = True
-            m_url = self.music_queue[0][0]['source']
+            songDetails = self.song[0]
+            m_url = songDetails.get('source')
 
             if self.vc == None or not self.vc.is_connected():
-                self.vc = await self.music_queue[0][1].connect()
+                self.vc = await songDetails.get('voiceChannel').connect()
 
                 if self.vc == None:
                     await ctx.send("Could not connect to the voice channel")
                     return
             else:
-                await self.vc.move_to(self.music_queue[0][1])
+                await self.vc.move_to(songDetails.get('voiceChannel'))
 
-            self.music_title = self.music_queue[0][0]['title']
+            self.music_title = songDetails.get('title')
 
-            self.music_queue.pop(0)
+            self.song.pop(0)
 
             try:
                 self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
@@ -103,15 +107,11 @@ class music_cog(commands.Cog):
             self.vc.resume()
         else:
             await ctx.send("```Searching....```")
-            song = self.search_yt(query)
-            if type(song) == type(True):
-                await ctx.send("Could not download the song. Incorrect format, try a different keyword")
-            else:
-                await ctx.send("```Song added to the queue : "+ song['title'] + "```")
-                self.music_queue.append([song, voice_channel])
-
-                if self.is_playing == False:
-                    await self.play_music(ctx)
+            song = await self.search_yt(query, voice_channel);
+            await ctx.send("```Song added to the queue : "+ song['title'] + "```")
+            self.music_queue.append([song, voice_channel])
+            if self.is_playing == False:
+                await self.play_music(ctx)
 
     @commands.command(name="pause", help="Pauses the current song being played")
     async def pause(self, ctx, *args):
