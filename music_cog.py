@@ -20,7 +20,6 @@ class music_cog(commands.Cog):
         self.is_disconnected = False
         self.is_paused = False
 
-        self.music_queue = []
         self.YDL_OPTIONS = {'format': 'bestaudio/best', 'acodec' 'noplaylist': 'True', 'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}]}
         self.FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
 
@@ -41,15 +40,13 @@ class music_cog(commands.Cog):
             return {'source': url, 'title': info['title']}
 
     def play_next(self):
-        if len(self.music_queue) > 0:
+        if len(self.song) > 0:
             self.is_playing = True
+            songDetails = self.song[0]
+            m_url = songDetails.get('source')
+            self.music_title = songDetails.get('title')
 
-            m_url = self.music_queue[0][0]['source']
-
-            self.music_title = self.music_queue[0][0]['title']
-
-            self.music_queue.pop(0)
-
+            self.song.pop(0)
             self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
         else:
             self.is_playing = False
@@ -73,6 +70,7 @@ class music_cog(commands.Cog):
 
             self.song.pop(0)
 
+            # need to fix this logic for playing music
             try:
                 self.vc.play(discord.FFmpegPCMAudio(m_url, **self.FFMPEG_OPTIONS), after=lambda e: self.play_next())
                 while self.vc.is_playing():
@@ -108,8 +106,10 @@ class music_cog(commands.Cog):
         else:
             await ctx.send("```Searching....```")
             song = await self.search_yt(query, voice_channel);
+            if song == false:
+                await ctx.send("Error while finding song");
+                raise
             await ctx.send("```Song added to the queue : "+ song['title'] + "```")
-            self.music_queue.append([song, voice_channel])
             if self.is_playing == False:
                 await self.play_music(ctx)
 
@@ -141,20 +141,19 @@ class music_cog(commands.Cog):
     async def queue(self, ctx):
         retval = ""
 
-        for i in range(0, len(self.music_queue)):
+        for i in range(0, len(self.song)):
             if i > 4: break
-            retval += self.music_queue[i][0]['title'] + '\n'
+            songDetails = self.song[i]
+            retval += songDetails.get('title') + '\n'
 
         if retval != "":
             await ctx.send(retval)
         else:
             await ctx.send("No music in the queue.")
 
-    @commands.command(name="clear", aliases=["c", "bin"], help="Stops the current song and clears the queue")
+    @commands.command(name="clear", aliases=["c", "bin"], help="Clears the queue")
     async def clear(self, ctx, *args):
-        if self.vc != None and self.is_playing:
-            self.vc.stop()
-        self.music_queue = []
+        self.song = []
         await ctx.send("Music queue cleared")
 
     @commands.command(name="leave", aliases=["disconnect", "l", "d"], help="Kick the bot from the voice channel")
