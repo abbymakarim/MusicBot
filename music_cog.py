@@ -106,9 +106,6 @@ class music_cog(commands.Cog):
         else:
             await ctx.send("```Searching....```")
             song = await self.search_yt(query, voice_channel);
-            if song == false:
-                await ctx.send("Error while finding song");
-                raise
             await ctx.send("```Song added to the queue : "+ song['title'] + "```")
             if self.is_playing == False:
                 await self.play_music(ctx)
