@@ -14,7 +14,7 @@ class music_cog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.music_title = ''
-        self.song = [{}]
+        self.song = []
 
         self.is_playing = False
         self.is_disconnected = False
@@ -58,13 +58,13 @@ class music_cog(commands.Cog):
             m_url = songDetails.get('source')
 
             if self.vc == None or not self.vc.is_connected():
-                self.vc = await songDetails.get('voiceChannel').connect()
+                self.vc = await ctx.author.voice.channel.connect()
 
                 if self.vc == None:
                     await ctx.send("Could not connect to the voice channel")
                     return
             else:
-                await self.vc.move_to(songDetails.get('voiceChannel'))
+                await self.vc.move_to(ctx.author.voice.channel)
 
             self.music_title = songDetails.get('title')
 
